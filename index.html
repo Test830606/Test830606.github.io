@@ -1,251 +1,313 @@
-<html><head><base href=""><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Sistema de Reservas - Restaurante</title><script src="https://cdn.tailwindcss.com"></script><script src="https://code.jquery.com/jquery-3.6.0.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script><link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet" /><script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
-
-<style>
-  .notification {
-    animation: notification 3s ease-in-out forwards;
-  }
-  @keyframes notification {
-    0% { transform: translateY(-100%); }
-    10% { transform: translateY(0); }
-    90% { transform: translateY(0); }
-    100% { transform: translateY(-100%); }
-  }
-</style>
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedidos - Restaurante Delicioso</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #e74c3c;
+            text-align: center;
+        }
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #c0392b;
+        }
+        #auth-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #user-info {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        #user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        #logout-btn {
+            width: auto;
+            padding: 5px 10px;
+            background-color: #555;
+        }
+        #logout-btn:hover {
+            background-color: #333;
+        }
+        .pedido-activo {
+            border: 2px solid #e74c3c;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background-color: #fff9f9;
+        }
+    </style>
 </head>
-
-<body class="bg-gray-100">
-<div id="notification" class="fixed top-0 left-0 right-0 bg-green-500 text-white p-4 text-center transform -translate-y-full"></div>
-
-<div id="loginModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-  <div class="bg-white p-8 rounded-lg w-96">
-    <h2 class="text-2xl font-bold mb-4">Administración</h2>
-    <input type="text" id="username" placeholder="Usuario" class="w-full p-2 mb-4 border rounded">
-    <input type="password" id="password" placeholder="Contraseña" class="w-full p-2 mb-4 border rounded">
-    <button onclick="login()" class="w-full bg-blue-600 text-white p-2 rounded">Ingresar</button>
-  </div>
-</div>
-
-<nav class="bg-blue-600 p-4 text-white">
-  <div class="container mx-auto flex justify-between items-center">
-    <h1 class="text-2xl font-bold">Restaurante App</h1>
-    <div class="flex space-x-4">
-      <button onclick="showSection('reserve')" class="hover:bg-blue-700 px-3 py-2 rounded">Reservar</button>
-      <button onclick="showSection('admin')" class="hover:bg-blue-700 px-3 py-2 rounded">Administración</button>
+<body>
+    <h1>Restaurante Delicioso</h1>
+    
+    <div id="auth-section">
+        <div id="g_id_onload"
+            data-client_id="TU_CLIENT_ID_GOOGLE.apps.googleusercontent.com"
+            data-context="signin"
+            data-ux_mode="popup"
+            data-callback="handleCredentialResponse"
+            data-auto_prompt="false">
+        </div>
+        <div class="g_id_signin"
+            data-type="standard"
+            data-shape="rectangular"
+            data-theme="outline"
+            data-text="signin_with"
+            data-size="large"
+            data-logo_alignment="left">
+        </div>
     </div>
-  </div>
-</nav>
-
-<main class="container mx-auto p-4">
-  <section id="reserve" class="">
-    <h2 class="text-2xl font-bold mb-4">Nueva Reserva</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="bg-white p-4 rounded shadow">
-        <form id="reservationForm" class="space-y-4">
-          <input type="text" id="name" placeholder="Nombre" required class="w-full p-2 border rounded">
-          <input type="text" id="lastname" placeholder="Apellidos" required class="w-full p-2 border rounded">
-          <input type="email" id="email" placeholder="Correo electrónico" required class="w-full p-2 border rounded">
-          <input type="tel" id="phone" placeholder="Número de móvil" required class="w-full p-2 border rounded">
-          <input type="number" id="guests" placeholder="Número de comensales" required min="1" class="w-full p-2 border rounded">
-          <input type="date" id="reservationDate" required class="w-full p-2 border rounded">
-          <select id="menuSelect" required class="w-full p-2 border rounded">
-            <option value="">Seleccione un menú</option>
-          </select>
-          <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Confirmar Reserva</button>
+    
+    <div id="user-info">
+        <img id="user-avatar" src="" alt="Foto de perfil">
+        <span id="user-name"></span>
+        <button id="logout-btn" onclick="logout()">Cerrar sesión</button>
+    </div>
+    
+    <div id="pedido-section" class="form-container" style="display: none;">
+        <h2>Realiza tu pedido</h2>
+        
+        <form id="pedidoForm">
+            <div id="pedido-activo" class="pedido-activo" style="display: none;">
+                <h3>Tu pedido en curso</h3>
+                <p id="pedido-info"></p>
+                <button type="button" onclick="cancelarPedido()">Cancelar pedido</button>
+            </div>
+            
+            <div id="nuevo-pedido">
+                <div class="form-group">
+                    <label for="direccion">Dirección de entrega:</label>
+                    <input type="text" id="direccion" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="comida">Selecciona tu comida:</label>
+                    <select id="comida" required>
+                        <option value="">-- Selecciona --</option>
+                        <option value="Pizza Margarita">Pizza Margarita - $10.000</option>
+                        <option value="Hamburguesa Clásica">Hamburguesa Clásica - $8.000</option>
+                        <option value="Ensalada César">Ensalada César - $7.000</option>
+                        <option value="Pasta Carbonara">Pasta Carbonara - $9.000</option>
+                        <option value="Sushi Variado">Sushi Variado - $12.000</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="notas">Notas adicionales:</label>
+                    <textarea id="notas" rows="3"></textarea>
+                </div>
+                
+                <button type="button" onclick="enviarPedido()">Enviar pedido por WhatsApp</button>
+            </div>
         </form>
-      </div>
-      <div id="calendar"></div>
     </div>
-  </section>
 
-  <section id="admin" class="hidden">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="bg-white p-4 rounded shadow">
-        <h3 class="text-xl font-bold mb-4">Gestión de Menús</h3>
-        <form id="menuForm" class="space-y-4">
-          <input type="text" id="menuName" placeholder="Nombre del menú" required class="w-full p-2 border rounded">
-          <textarea id="menuDescription" placeholder="Descripción" required class="w-full p-2 border rounded"></textarea>
-          <input type="number" id="menuPrice" placeholder="Precio" required step="0.01" class="w-full p-2 border rounded">
-          <button type="submit" class="w-full bg-blue-600 text-white p-2 rounded">Agregar Menú</button>
-        </form>
-        <div id="menuList" class="mt-4 space-y-2"></div>
-      </div>
-      <div class="bg-white p-4 rounded shadow">
-        <h3 class="text-xl font-bold mb-4">Reservas</h3>
-        <div id="reservationList" class="space-y-2"></div>
-      </div>
-    </div>
-  </section>
-</main>
-
-<script>
-let menus = [];
-let reservations = [];
-let isLoggedIn = false;
-
-function showSection(sectionId) {
-  if (sectionId === 'admin' && !isLoggedIn) {
-    document.getElementById('loginModal').classList.remove('hidden');
-    return;
-  }
-  
-  document.querySelectorAll('main section').forEach(section => {
-    section.classList.add('hidden');
-  });
-  document.getElementById(sectionId).classList.remove('hidden');
-}
-
-function login() {
-  const username = document.getElementById('username').value;
-  const password = document.getElementById('password').value;
-  
-  if (username === 'cansino' && password === 'cansino08') {
-    isLoggedIn = true;
-    document.getElementById('loginModal').classList.add('hidden');
-    showSection('admin');
-    showNotification('Bienvenido al panel de administración');
-  } else {
-    showNotification('Credenciales incorrectas');
-  }
-}
-
-document.getElementById('reservationForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const reservation = {
-    id: Date.now(),
-    name: document.getElementById('name').value,
-    lastname: document.getElementById('lastname').value,
-    email: document.getElementById('email').value,
-    phone: document.getElementById('phone').value,
-    guests: document.getElementById('guests').value,
-    date: document.getElementById('reservationDate').value,
-    menuId: document.getElementById('menuSelect').value
-  };
-  
-  reservations.push(reservation);
-  renderReservations();
-  showNotification('Reserva confirmada');
-  this.reset();
-});
-
-document.getElementById('menuForm').addEventListener('submit', function(e) {
-  e.preventDefault();
-  const menu = {
-    id: Date.now(),
-    name: document.getElementById('menuName').value,
-    description: document.getElementById('menuDescription').value,
-    price: document.getElementById('menuPrice').value
-  };
-  
-  menus.push(menu);
-  renderMenus();
-  updateMenuSelect();
-  showNotification('Menú agregado');
-  this.reset();
-});
-
-function renderMenus() {
-  const menuList = document.getElementById('menuList');
-  menuList.innerHTML = menus.map(menu => `
-    <div class="bg-gray-100 p-4 rounded">
-      <h4 class="font-bold">${menu.name}</h4>
-      <p>${menu.description}</p>
-      <p class="font-bold">$${menu.price}</p>
-      <div class="mt-2 space-x-2">
-        <button onclick="editMenu(${menu.id})" class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
-        <button onclick="deleteMenu(${menu.id})" class="bg-red-500 text-white px-2 py-1 rounded">Eliminar</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderReservations() {
-  const reservationList = document.getElementById('reservationList');
-  reservationList.innerHTML = reservations.map(reservation => `
-    <div class="bg-gray-100 p-4 rounded">
-      <h4 class="font-bold">${reservation.name} ${reservation.lastname}</h4>
-      <p>Email: ${reservation.email}</p>
-      <p>Teléfono: ${reservation.phone}</p>
-      <p>Comensales: ${reservation.guests}</p>
-      <p>Fecha: ${reservation.date}</p>
-      <p>Menú: ${menus.find(m => m.id === parseInt(reservation.menuId))?.name || 'No especificado'}</p>
-      <div class="mt-2 space-x-2">
-        <button onclick="editReservation(${reservation.id})" class="bg-yellow-500 text-white px-2 py-1 rounded">Editar</button>
-        <button onclick="deleteReservation(${reservation.id})" class="bg-red-500 text-white px-2 py-1 rounded">Eliminar</button>
-      </div>
-    </div>
-  `).join('');
-}
-
-function updateMenuSelect() {
-  const select = document.getElementById('menuSelect');
-  select.innerHTML = `
-    <option value="">Seleccione un menú</option>
-    ${menus.map(menu => `<option value="${menu.id}">${menu.name} - $${menu.price}</option>`).join('')}
-  `;
-}
-
-function editMenu(id) {
-  const menu = menus.find(m => m.id === id);
-  if (!menu) return;
-  
-  document.getElementById('menuName').value = menu.name;
-  document.getElementById('menuDescription').value = menu.description;
-  document.getElementById('menuPrice').value = menu.price;
-  
-  menus = menus.filter(m => m.id !== id);
-  renderMenus();
-  updateMenuSelect();
-}
-
-function deleteMenu(id) {
-  menus = menus.filter(m => m.id !== id);
-  renderMenus();
-  updateMenuSelect();
-  showNotification('Menú eliminado');
-}
-
-function editReservation(id) {
-  const reservation = reservations.find(r => r.id === id);
-  if (!reservation) return;
-  
-  document.getElementById('name').value = reservation.name;
-  document.getElementById('lastname').value = reservation.lastname;
-  document.getElementById('email').value = reservation.email;
-  document.getElementById('phone').value = reservation.phone;
-  document.getElementById('guests').value = reservation.guests;
-  document.getElementById('reservationDate').value = reservation.date;
-  document.getElementById('menuSelect').value = reservation.menuId;
-  
-  reservations = reservations.filter(r => r.id !== id);
-  renderReservations();
-  showSection('reserve');
-}
-
-function deleteReservation(id) {
-  reservations = reservations.filter(r => r.id !== id);
-  renderReservations();
-  showNotification('Reserva eliminada');
-}
-
-function showNotification(message) {
-  const notification = document.getElementById('notification');
-  notification.textContent = message;
-  notification.classList.add('notification');
-  setTimeout(() => {
-    notification.classList.remove('notification');
-  }, 3000);
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  var calendarEl = document.getElementById('calendar');
-  var calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    selectable: true,
-    select: function(info) {
-      document.getElementById('reservationDate').value = info.startStr;
-    }
-  });
-  calendar.render();
-});
-</script>
-</body></html>
+    <script>
+        // Datos de los usuarios y sus pedidos
+        const usuariosActivos = {};
+        let usuarioActual = null;
+        
+        // Función para manejar la respuesta de autenticación de Google
+        function handleCredentialResponse(response) {
+            const responsePayload = decodeJWT(response.credential);
+            
+            usuarioActual = {
+                id: responsePayload.sub,
+                nombre: responsePayload.name,
+                email: responsePayload.email,
+                avatar: responsePayload.picture
+            };
+            
+            // Guardar el usuario en la lista de usuarios activos si no existe
+            if (!usuariosActivos[usuarioActual.id]) {
+                usuariosActivos[usuarioActual.id] = {
+                    info: usuarioActual,
+                    pedido: null
+                };
+            }
+            
+            // Mostrar información del usuario
+            document.getElementById('user-avatar').src = usuarioActual.avatar;
+            document.getElementById('user-name').textContent = usuarioActual.nombre;
+            document.getElementById('user-info').style.display = 'flex';
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('pedido-section').style.display = 'block';
+            
+            // Verificar si tiene un pedido activo
+            if (usuariosActivos[usuarioActual.id].pedido) {
+                mostrarPedidoActivo(usuariosActivos[usuarioActual.id].pedido);
+            }
+        }
+        
+        // Función para decodificar el JWT
+        function decodeJWT(token) {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            
+            return JSON.parse(jsonPayload);
+        }
+        
+        // Función para cerrar sesión
+        function logout() {
+            usuarioActual = null;
+            document.getElementById('user-info').style.display = 'none';
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('pedido-section').style.display = 'none';
+            
+            // Limpiar el estado de autenticación de Google
+            google.accounts.id.disableAutoSelect();
+        }
+        
+        // Función para enviar pedido
+        function enviarPedido() {
+            if (!usuarioActual) {
+                alert('Debes iniciar sesión primero');
+                return;
+            }
+            
+            // Obtener los valores del formulario
+            const direccion = document.getElementById('direccion').value;
+            const comida = document.getElementById('comida').value;
+            const notas = document.getElementById('notas').value;
+            
+            // Validar que todos los campos obligatorios estén completos
+            if (!direccion || !comida) {
+                alert('Por favor completa todos los campos obligatorios.');
+                return;
+            }
+            
+            // Crear el objeto pedido
+            const pedido = {
+                id: Date.now(), // Usamos la marca de tiempo como ID único
+                cliente: usuarioActual,
+                direccion: direccion,
+                comida: comida,
+                notas: notas,
+                fecha: new Date().toLocaleString()
+            };
+            
+            // Guardar el pedido en el usuario
+            usuariosActivos[usuarioActual.id].pedido = pedido;
+            
+            // Mostrar el pedido activo
+            mostrarPedidoActivo(pedido);
+            
+            // Crear el mensaje para WhatsApp
+            let mensaje = `¡Hola! Quiero hacer un pedido:\n\n`;
+            mensaje += `*Cliente:* ${usuarioActual.nombre}\n`;
+            mensaje += `*Email:* ${usuarioActual.email}\n`;
+            mensaje += `*Dirección:* ${direccion}\n`;
+            mensaje += `*Comida:* ${comida}\n`;
+            
+            if (notas) {
+                mensaje += `*Notas adicionales:* ${notas}\n`;
+            }
+            
+            mensaje += `\nID de pedido: ${pedido.id}`;
+            
+            // Codificar el mensaje para URL
+            const mensajeCodificado = encodeURIComponent(mensaje);
+            
+            // Número de teléfono del restaurante (reemplaza con el número real)
+            const numeroRestaurante = '573001234567'; // Ejemplo: número de Colombia
+            
+            // Crear el enlace de WhatsApp
+            const urlWhatsApp = `https://wa.me/${numeroRestaurante}?text=${mensajeCodificado}`;
+            
+            // Abrir WhatsApp en una nueva pestaña
+            window.open(urlWhatsApp, '_blank');
+        }
+        
+        // Función para mostrar el pedido activo
+        function mostrarPedidoActivo(pedido) {
+            document.getElementById('nuevo-pedido').style.display = 'none';
+            document.getElementById('pedido-activo').style.display = 'block';
+            
+            let infoPedido = `
+                <strong>Comida:</strong> ${pedido.comida}<br>
+                <strong>Dirección:</strong> ${pedido.direccion}<br>
+                <strong>Fecha:</strong> ${pedido.fecha}<br>
+                <strong>ID de pedido:</strong> ${pedido.id}
+            `;
+            
+            if (pedido.notas) {
+                infoPedido += `<br><strong>Notas:</strong> ${pedido.notas}`;
+            }
+            
+            document.getElementById('pedido-info').innerHTML = infoPedido;
+        }
+        
+        // Función para cancelar pedido
+        function cancelarPedido() {
+            if (!usuarioActual || !usuariosActivos[usuarioActual.id].pedido) return;
+            
+            if (confirm('¿Estás seguro de que quieres cancelar este pedido?')) {
+                usuariosActivos[usuarioActual.id].pedido = null;
+                document.getElementById('pedido-activo').style.display = 'none';
+                document.getElementById('nuevo-pedido').style.display = 'block';
+                document.getElementById('pedidoForm').reset();
+            }
+        }
+        
+        // Inicializar el cliente de Google
+        window.onload = function() {
+            google.accounts.id.initialize({
+                client_id: "TU_CLIENT_ID_GOOGLE.apps.googleusercontent.com",
+                callback: handleCredentialResponse
+            });
+        };
+    </script>
+</body>
+</html>
